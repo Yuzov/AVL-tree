@@ -1,4 +1,16 @@
+#include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
+#define COUNT 10
+
+struct avltree {
+    int key;
+    char* value;
+
+    int height;
+    struct avltree* left;
+    struct avltree* right;
+};
 
 void avltree_free(struct avltree* tree);
 struct avltree* avltree_lookup(struct avltree* tree, int key);
@@ -10,42 +22,29 @@ struct avltree* avltree_right_rotate(struct avltree* tree);
 struct avltree* avltree_left_rotate(struct avltree* tree);
 struct avltree* avltree_leftright_rotate(struct avltree* tree);
 struct avltree* avltree_rightleft_rotate(struct avltree* tree);
-
-struct avltree {
-    int key;
-    char* value;
-
-    int height;
-    struct avltree* left;
-    struct avltree* right;
-};
+int imax2(int left_height, int right_height);
+void print2DUtil(struct avltree* root, int space);
+void print2D(struct avltree* root);
 
 int main()
 {
-    int x, y;
-}
-
-void avltree_free(struct avltree* tree)
-{
-    if (tree == NULL)
-        return;
-    avltree_free(tree->left);
-    avltree_free(tree->right);
-    free(tree);
-}
-
-struct avltree* avltree_lookup(struct avltree* tree, int key)
-{
-    while (tree != NULL) {
-        if (key == tree->key) {
-            return tree;
-        } else if (key < tree->key) {
-            tree = tree->left;
-        } else {
-            tree = tree->right;
-        }
+    FILE* fout;
+    fout = fopen("out.txt", "w+");
+    double time1, time2;
+    struct avltree* tree;
+    tree = avltree_create(0, "word");
+    for (int i = 1; i < 5; i++) {
+        // fprintf(fout, "%d ", avltree_add(tree, i, "AVL"));
+        tree = avltree_add(tree, i, "AVL");
+        // tree = avltree_add(tree, 2, "LOL");
+        // tree = avltree_add(tree, 3, "HAH");
+        // tree = avltree_add(tree, 4, "TOP");
     }
-    return tree;
+    //
+    print2D(tree);
+    avltree_free(tree);
+    fclose(fout);
+    return 0;
 }
 
 struct avltree* avltree_create(int key, char* value)
@@ -60,15 +59,6 @@ struct avltree* avltree_create(int key, char* value)
         node->height = 0;
     }
     return node;
-}
-
-int avltree_height(struct avltree* tree)
-{
-    return (tree != NULL) ? tree->height : -1;
-}
-int avltree_balance(struct avltree* tree)
-{
-    return avltree_height(tree->left) - avltree_height(tree->right);
 }
 
 struct avltree* avltree_add(struct avltree* tree, int key, char* value)
@@ -109,6 +99,15 @@ struct avltree* avltree_add(struct avltree* tree, int key, char* value)
     return tree;
 }
 
+int avltree_height(struct avltree* tree)
+{
+    return (tree != NULL) ? tree->height : -1;
+}
+int avltree_balance(struct avltree* tree)
+{
+    return avltree_height(tree->left) - avltree_height(tree->right);
+}
+
 struct avltree* avltree_right_rotate(struct avltree* tree)
 {
     struct avltree* left;
@@ -145,4 +144,50 @@ struct avltree* avltree_rightleft_rotate(struct avltree* tree)
 {
     tree->right = avltree_right_rotate(tree->right);
     return avltree_left_rotate(tree);
+}
+
+void avltree_free(struct avltree* tree)
+{
+    if (tree == NULL)
+        return;
+    avltree_free(tree->left);
+    avltree_free(tree->right);
+    free(tree);
+}
+
+int imax2(int left_height, int right_height)
+{
+    if (left_height > right_height)
+        return left_height;
+    else
+        return right_height;
+}
+
+void print2DUtil(struct avltree* root, int space)
+{
+    // Base case
+    if (root == NULL)
+        return;
+
+    // Increase distance between levels
+    space += COUNT;
+
+    // Process right child first
+    print2DUtil(root->right, space);
+
+    // Print current node after space
+    // count
+    printf("\n");
+    for (int i = COUNT; i < space; i++)
+        printf(" ");
+    printf("%d\n", root->key);
+
+    // Process left child
+    print2DUtil(root->left, space);
+}
+
+void print2D(struct avltree* root)
+{
+    // Pass initial space count as 0
+    print2DUtil(root, 0);
 }
