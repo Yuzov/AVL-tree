@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #define COUNT 10
 
+int vec_left[50001] = {0};
+
 struct avltree {
     int key;
     char* value;
@@ -23,8 +25,9 @@ struct avltree* avltree_left_rotate(struct avltree* tree);
 struct avltree* avltree_leftright_rotate(struct avltree* tree);
 struct avltree* avltree_rightleft_rotate(struct avltree* tree);
 int imax2(int left_height, int right_height);
-void print2DUtil(struct avltree* root, int space);
-void print2D(struct avltree* root);
+void Display(struct avltree* root, int ident, FILE* fout);
+/* void print2DUtil(struct avltree* root, int space, FILE* fout);
+void print2D(struct avltree* root, FILE* fout); */
 
 int main()
 {
@@ -33,7 +36,7 @@ int main()
     double time1, time2;
     struct avltree* tree;
     tree = avltree_create(0, "word");
-    for (int i = 1; i < 5; i++) {
+    for (int i = 1; i < 100; i++) {
         // fprintf(fout, "%d ", avltree_add(tree, i, "AVL"));
         tree = avltree_add(tree, i, "AVL");
         // tree = avltree_add(tree, 2, "LOL");
@@ -41,7 +44,8 @@ int main()
         // tree = avltree_add(tree, 4, "TOP");
     }
     //
-    print2D(tree);
+    // print2D(tree, fout);
+    Display(tree, 0, fout);
     avltree_free(tree);
     fclose(fout);
     return 0;
@@ -163,8 +167,12 @@ int imax2(int left_height, int right_height)
         return right_height;
 }
 
-void print2DUtil(struct avltree* root, int space)
+/* void print2DUtil(struct avltree* root, int space, FILE* fout)
 {
+    char spce = ' ';
+    char nt = '\n';
+    char ls = '/';
+    char rs = '\\';
     // Base case
     if (root == NULL)
         return;
@@ -173,21 +181,47 @@ void print2DUtil(struct avltree* root, int space)
     space += COUNT;
 
     // Process right child first
-    print2DUtil(root->right, space);
+    print2DUtil(root->right, space, fout);
 
     // Print current node after space
     // count
-    printf("\n");
-    for (int i = COUNT; i < space; i++)
-        printf(" ");
-    printf("%d\n", root->key);
+    fprintf(fout, "%c", nt);
+    for (int i = COUNT; i < space; i++) {
+        fprintf(fout, "%c", spce);
+    }
+    fprintf(fout, "%d\n", root->key);
 
     // Process left child
-    print2DUtil(root->left, space);
+    print2DUtil(root->left, space, fout);
 }
 
-void print2D(struct avltree* root)
+void print2D(struct avltree* root, FILE* fout)
 {
     // Pass initial space count as 0
-    print2DUtil(root, 0);
+    print2DUtil(root, 0, fout);
+} */
+
+void Display(struct avltree* root, int ident, FILE* fout)
+{
+    if (ident > 0) {
+        for (int i = 0; i < ident - 1; ++i) {
+            fprintf(fout, vec_left[i] ? "│   " : "    ");
+        }
+        fprintf(fout, vec_left[ident - 1] ? "├── " : "└── ");
+    }
+
+    if (!root) {
+        fprintf(fout, "(null)\n");
+        return;
+    }
+
+    fprintf(fout, "%d\n", root->height);
+    if (!root->left && !root->right) {
+        return;
+    }
+
+    vec_left[ident] = 1;
+    Display(root->left, ident + 1, fout);
+    vec_left[ident] = 0;
+    Display(root->right, ident + 1, fout);
 }
