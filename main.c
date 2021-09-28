@@ -1,6 +1,8 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
+#include <time.h>
 #define COUNT 10
 
 int vec_left[50001] = {0};
@@ -29,23 +31,39 @@ void Display(struct avltree* root, int ident, FILE* fout);
 /* void print2DUtil(struct avltree* root, int space, FILE* fout);
 void print2D(struct avltree* root, FILE* fout); */
 
+double wtime()
+{
+    struct timeval t;
+    gettimeofday(&t, NULL);
+    return (double)t.tv_sec + (double)t.tv_usec * 1E-6;
+}
+
 int main()
 {
+    srand(time(NULL));
     FILE* fout;
     fout = fopen("out.txt", "w+");
     double time1, time2;
-    struct avltree* tree;
-    tree = avltree_create(0, "word");
-    for (int i = 1; i < 100; i++) {
+    struct avltree *tree, *node;
+    tree = avltree_create(1, "word");
+    for (int i = 2; i <= 50000000; i++) {
         // fprintf(fout, "%d ", avltree_add(tree, i, "AVL"));
         tree = avltree_add(tree, i, "AVL");
+
+        if (i % 5000000 == 0) {
+            time1 = wtime();
+            avltree_lookup(tree, (rand() % i + 1));
+            time2 = wtime();
+            fprintf(fout, "n = %d; time = %.8lf\n", i, time2 - time1);
+        }
         // tree = avltree_add(tree, 2, "LOL");
         // tree = avltree_add(tree, 3, "HAH");
         // tree = avltree_add(tree, 4, "TOP");
     }
     //
+    // printf("\nTotal time: %lf", time2 - time1);
     // print2D(tree, fout);
-    Display(tree, 0, fout);
+    // Display(tree, 0, fout);
     avltree_free(tree);
     fclose(fout);
     return 0;
@@ -224,4 +242,18 @@ void Display(struct avltree* root, int ident, FILE* fout)
     Display(root->left, ident + 1, fout);
     vec_left[ident] = 0;
     Display(root->right, ident + 1, fout);
+}
+
+struct avltree* avltree_lookup(struct avltree* tree, int key)
+{
+    while (tree != NULL) {
+        if (key == tree->key) {
+            return tree;
+        } else if (key < tree->key) {
+            tree = tree->left;
+        } else {
+            tree = tree->right;
+        }
+    }
+    return tree;
 }
