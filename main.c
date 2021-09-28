@@ -44,6 +44,7 @@ int main()
     FILE* fout;
     fout = fopen("out.txt", "w+");
     double time1, time2;
+    int random;
     struct avltree *tree, *node;
     tree = avltree_create(1, "word");
     for (int i = 2; i <= 50000000; i++) {
@@ -51,10 +52,15 @@ int main()
         tree = avltree_add(tree, i, "AVL");
 
         if (i % 5000000 == 0) {
+            random = rand() % i + 1;
             time1 = wtime();
-            avltree_lookup(tree, (rand() % i + 1));
+            avltree_lookup(tree, (random));
             time2 = wtime();
-            fprintf(fout, "n = %d; time = %.8lf\n", i, time2 - time1);
+            fprintf(fout,
+                    "random = %d; n = %d; time = %.8lf\n",
+                    random,
+                    i,
+                    time2 - time1);
         }
         // tree = avltree_add(tree, 2, "LOL");
         // tree = avltree_add(tree, 3, "HAH");
