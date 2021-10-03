@@ -19,17 +19,19 @@ struct avltree {
 
 void avltree_free(struct avltree* tree);
 struct avltree* avltree_lookup(struct avltree* tree, int key);
-struct avltree* avltree_create(int key, char* value);
+struct avltree* avltree_create(int key, char* value, float* total_cnt);
 int avltree_height(struct avltree* tree);
 int avltree_balance(struct avltree* tree);
-struct avltree* avltree_add(struct avltree* tree, int key, char* value);
+struct avltree*
+avltree_add(struct avltree* tree, int key, char* value, float* total_cnt);
 struct avltree* avltree_right_rotate(struct avltree* tree);
 struct avltree* avltree_left_rotate(struct avltree* tree);
 struct avltree* avltree_leftright_rotate(struct avltree* tree);
 struct avltree* avltree_rightleft_rotate(struct avltree* tree);
 int imax2(int left_height, int right_height);
 void Display(struct avltree* root, int ident, FILE* fout);
-struct avltree* avltree_delete(struct avltree* tree, int key);
+struct avltree* avltree_delete(
+        struct avltree* tree, int key, float* deleted_cnt, float* total_cnt);
 /* void print2DUtil(struct avltree* root, int space, FILE* fout);
 void print2D(struct avltree* root, FILE* fout); */
 
@@ -49,14 +51,15 @@ int main()
 {
     srand(time(0));
     FILE* fout;
+    float deleted_cnt = 0, total_cnt = 0;
     fout = fopen("out.txt", "w+");
     double time1 = 0, time2 = 0, res;
     int random;
     struct avltree *tree, *node;
-    tree = avltree_create(1, "word");
-    for (int i = 2; i <= 5; i++) {
+    tree = avltree_create(1, "word", &total_cnt);
+    for (int i = 2; i <= 10; i++) {
         // fprintf(fout, "%d ", avltree_add(tree, i, "AVL"));
-        tree = avltree_add(tree, i, "AVL");
+        tree = avltree_add(tree, i, "AVL", &total_cnt);
 
         if (i % 1 == 0) {
             random = getrand(i - 5000, i);
@@ -83,24 +86,57 @@ int main()
     //
     // printf("\nTotal time: %lf", time2 - time1);
     // print2D(tree, fout);
-    avltree_delete(tree, 3);
+    printf("Total_cnt = %f\n", total_cnt);
+    for (int k = 4; k < 10; k++) {
+        tree = avltree_delete(tree, k, &deleted_cnt, &total_cnt);
+    }
+    /* tree = avltree_delete(tree, 3, &deleted_cnt, &total_cnt);
+    tree = avltree_delete(tree, 4, &deleted_cnt, &total_cnt);
+    tree = avltree_delete(tree, 5, &deleted_cnt, &total_cnt); */
     Display(tree, 0, fout);
     avltree_free(tree);
     fclose(fout);
     return 0;
 }
 
-struct avltree* avltree_delete(struct avltree* tree, int key)
+struct avltree*
+avltree_rebuild(struct avltree* tree, struct avltree* rb_tree, float* total_cnt)
 {
-    struct avltree* del_node = avltree_lookup(tree, key);
-    del_node->deleted = 1;
+    if (tree->deleted == 0) {
+        *total_cnt = *total_cnt + 1;
+        rb_tree = avltree_add(rb_tree, tree->key, tree->value, total_cnt);
+    }
+    if (tree->left != NULL)
+        avltree_rebuild(tree->left, rb_tree, total_cnt);
+    if (tree->right != NULL)
+        avltree_rebuild(tree->right, rb_tree, total_cnt);
+    return rb_tree;
 }
 
-struct avltree* avltree_create(int key, char* value)
+struct avltree* avltree_delete(
+        struct avltree* tree, int key, float* deleted_cnt, float* total_cnt)
+{
+    struct avltree* del_node = avltree_lookup(tree, key);
+    if (del_node != NULL) {
+        *deleted_cnt = *deleted_cnt + 1;
+        del_node->deleted = 1;
+        float k = *deleted_cnt / *total_cnt;
+        if ((*deleted_cnt / (*total_cnt)) >= 0.5) {
+            *total_cnt = 0;
+            *deleted_cnt = 0;
+            struct avltree* rb_tree = avltree_rebuild(tree, rb_tree, total_cnt);
+            return rb_tree;
+        } else
+            return tree;
+    }
+}
+
+struct avltree* avltree_create(int key, char* value, float* total_cnt)
 {
     struct avltree* node;
     node = malloc(sizeof(*node));
     if (node != NULL) {
+        *total_cnt = *total_cnt + 1;
         node->key = key;
         node->value = value;
         node->deleted = 0;
@@ -111,17 +147,18 @@ struct avltree* avltree_create(int key, char* value)
     return node;
 }
 
-struct avltree* avltree_add(struct avltree* tree, int key, char* value)
+struct avltree*
+avltree_add(struct avltree* tree, int key, char* value, float* total_cnt)
 {
     if (tree == NULL) {
-        return avltree_create(key, value);
+        return avltree_create(key, value, total_cnt);
     }
     if ((tree->deleted == 1) && (tree->key == key)) {
-        return avltree_create(key, value);
+        return avltree_create(key, value, total_cnt);
     }
     if (key < tree->key) {
         /* Insert into left subtree */
-        tree->left = avltree_add(tree->left, key, value);
+        tree->left = avltree_add(tree->left, key, value, total_cnt);
         if (avltree_height(tree->left) - avltree_height(tree->right) == 2) {
             /* Subtree is unbalanced */
             if (key < tree->left->key) {
@@ -134,7 +171,7 @@ struct avltree* avltree_add(struct avltree* tree, int key, char* value)
         }
     } else if (key > tree->key) {
         /* Insert into right subtree */
-        tree->right = avltree_add(tree->right, key, value);
+        tree->right = avltree_add(tree->right, key, value, total_cnt);
         if (avltree_height(tree->right) - avltree_height(tree->left) == 2) {
             /* Subtree is unbalanced */
             if (key > tree->right->key) {
