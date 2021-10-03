@@ -86,10 +86,11 @@ int main()
     //
     // printf("\nTotal time: %lf", time2 - time1);
     // print2D(tree, fout);
-    printf("Total_cnt = %f\n", total_cnt);
-    for (int k = 4; k < 10; k++) {
+
+    for (int k = 6; k <= 10; k++) {
         tree = avltree_delete(tree, k, &deleted_cnt, &total_cnt);
     }
+    // printf("Total_cnt = %f\n", total_cnt);
     /* tree = avltree_delete(tree, 3, &deleted_cnt, &total_cnt);
     tree = avltree_delete(tree, 4, &deleted_cnt, &total_cnt);
     tree = avltree_delete(tree, 5, &deleted_cnt, &total_cnt); */
@@ -107,9 +108,9 @@ avltree_rebuild(struct avltree* tree, struct avltree* rb_tree, float* total_cnt)
         rb_tree = avltree_add(rb_tree, tree->key, tree->value, total_cnt);
     }
     if (tree->left != NULL)
-        avltree_rebuild(tree->left, rb_tree, total_cnt);
+        rb_tree = avltree_rebuild(tree->left, rb_tree, total_cnt);
     if (tree->right != NULL)
-        avltree_rebuild(tree->right, rb_tree, total_cnt);
+        rb_tree = avltree_rebuild(tree->right, rb_tree, total_cnt);
     return rb_tree;
 }
 
@@ -124,8 +125,11 @@ struct avltree* avltree_delete(
         if ((*deleted_cnt / (*total_cnt)) >= 0.5) {
             *total_cnt = 0;
             *deleted_cnt = 0;
-            struct avltree* rb_tree = avltree_rebuild(tree, rb_tree, total_cnt);
+            struct avltree* rb_tree = NULL;
+            rb_tree = avltree_rebuild(tree, rb_tree, total_cnt);
             return rb_tree;
+            /* struct avltree* rb_tree = avltree_rebuild(tree, rb_tree,
+            total_cnt); return rb_tree; */
         } else
             return tree;
     }
