@@ -10,6 +10,7 @@ int vec_left[50001] = {0};
 struct avltree {
     int key;
     char* value;
+    int deleted;
 
     int height;
     struct avltree* left;
@@ -28,6 +29,7 @@ struct avltree* avltree_leftright_rotate(struct avltree* tree);
 struct avltree* avltree_rightleft_rotate(struct avltree* tree);
 int imax2(int left_height, int right_height);
 void Display(struct avltree* root, int ident, FILE* fout);
+struct avltree* avltree_delete(struct avltree* tree, int key);
 /* void print2DUtil(struct avltree* root, int space, FILE* fout);
 void print2D(struct avltree* root, FILE* fout); */
 
@@ -38,41 +40,60 @@ double wtime()
     return (double)t.tv_sec + (double)t.tv_usec * 1E-6;
 }
 
+int getrand(int min, int max)
+{
+    return (double)rand() / (RAND_MAX + 1.0) * (max - min) + min;
+}
+
 int main()
 {
-    srand(time(NULL));
+    srand(time(0));
     FILE* fout;
     fout = fopen("out.txt", "w+");
-    double time1, time2;
+    double time1 = 0, time2 = 0, res;
     int random;
     struct avltree *tree, *node;
     tree = avltree_create(1, "word");
-    for (int i = 2; i <= 50000000; i++) {
+    for (int i = 2; i <= 5; i++) {
         // fprintf(fout, "%d ", avltree_add(tree, i, "AVL"));
         tree = avltree_add(tree, i, "AVL");
 
-        if (i % 5000000 == 0) {
-            random = rand() % i + 1;
+        if (i % 1 == 0) {
+            random = getrand(i - 5000, i);
             time1 = wtime();
+            // ctime1 = clock();
+            int x = time1 * 2;
             avltree_lookup(tree, (random));
+            // ctime2 = clock();
             time2 = wtime();
-            fprintf(fout,
-                    "random = %d; n = %d; time = %.8lf\n",
-                    random,
-                    i,
-                    time2 - time1);
+            res = time2 - time1;
+            /*  fprintf(fout,
+                     "random = %d; n = %d; time = %.8lf\n",
+                     random,
+                     i,
+                     res); */
         }
+        time1 = 0;
+        time2 = 0;
         // tree = avltree_add(tree, 2, "LOL");
         // tree = avltree_add(tree, 3, "HAH");
         // tree = avltree_add(tree, 4, "TOP");
     }
+
     //
     // printf("\nTotal time: %lf", time2 - time1);
     // print2D(tree, fout);
-    // Display(tree, 0, fout);
+    avltree_delete(tree, 3);
+    Display(tree, 0, fout);
     avltree_free(tree);
     fclose(fout);
     return 0;
+}
+
+struct avltree* avltree_delete(struct avltree* tree, int key)
+{
+    struct avltree* del_node = avltree_lookup(tree, key);
+    del_node->deleted = 1;
 }
 
 struct avltree* avltree_create(int key, char* value)
@@ -82,6 +103,7 @@ struct avltree* avltree_create(int key, char* value)
     if (node != NULL) {
         node->key = key;
         node->value = value;
+        node->deleted = 0;
         node->left = NULL;
         node->right = NULL;
         node->height = 0;
@@ -92,6 +114,9 @@ struct avltree* avltree_create(int key, char* value)
 struct avltree* avltree_add(struct avltree* tree, int key, char* value)
 {
     if (tree == NULL) {
+        return avltree_create(key, value);
+    }
+    if ((tree->deleted == 1) && (tree->key == key)) {
         return avltree_create(key, value);
     }
     if (key < tree->key) {
@@ -239,7 +264,7 @@ void Display(struct avltree* root, int ident, FILE* fout)
         return;
     }
 
-    fprintf(fout, "%d\n", root->height);
+    fprintf(fout, "%d\n", root->key);
     if (!root->left && !root->right) {
         return;
     }
