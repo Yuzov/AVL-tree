@@ -33,6 +33,8 @@ void Display(struct avltree* root, int ident, FILE* fout);
 struct avltree* avltree_delete(
         struct avltree* tree, int key, float* deleted_cnt, float* total_cnt);
 struct avltree* avltree_min(struct avltree* tree);
+struct avltree* avltree_max(struct avltree* tree);
+struct avltree* check_min(struct avltree* tree);
 /* void print2DUtil(struct avltree* root, int space, FILE* fout);
 void print2D(struct avltree* root, FILE* fout); */
 
@@ -92,6 +94,19 @@ int main()
     tree = avltree_delete(tree, 3, &deleted_cnt, &total_cnt);
     tree = avltree_delete(tree, 4, &deleted_cnt, &total_cnt);
     tree = avltree_delete(tree, 5, &deleted_cnt, &total_cnt);
+    tree = avltree_delete(tree, 6, &deleted_cnt, &total_cnt);
+    tree = avltree_delete(tree, 7, &deleted_cnt, &total_cnt);
+    tree = avltree_delete(tree, 8, &deleted_cnt, &total_cnt);
+    tree = avltree_delete(tree, 9, &deleted_cnt, &total_cnt);
+    tree = avltree_delete(tree, 10, &deleted_cnt, &total_cnt);
+    tree = avltree_delete(tree, 11, &deleted_cnt, &total_cnt);
+    tree = avltree_delete(tree, 12, &deleted_cnt, &total_cnt);
+    tree = avltree_delete(tree, 13, &deleted_cnt, &total_cnt);
+    tree = avltree_delete(tree, 14, &deleted_cnt, &total_cnt);
+    tree = avltree_delete(tree, 15, &deleted_cnt, &total_cnt);
+    // tree = avltree_delete(tree, 16, &deleted_cnt, &total_cnt);
+    tree = avltree_delete(tree, 49, &deleted_cnt, &total_cnt);
+    tree = avltree_delete(tree, 50, &deleted_cnt, &total_cnt);
     tree = avltree_min(tree);
 
     /* for (int k = 6; k <= 10; k++) {
@@ -107,8 +122,15 @@ int main()
     return 0;
 }
 
-struct avltree* check_min(struct avltree* tree, struct avltree* node)
+struct avltree* check_min(struct avltree* tree)
 {
+    struct avltree* node = tree->right;
+    tree = avltree_min(tree);
+    if (tree->right != NULL) {
+        tree = tree->right;
+        tree = avltree_min(tree);
+    }
+    return tree;
     /* while (tree->left != NULL) {
         tree = tree->left;
     }
@@ -123,42 +145,43 @@ struct avltree* check_min(struct avltree* tree, struct avltree* node)
         return node;
     } */
 }
-
-struct avltree* avltree_min(struct avltree* tree)
+struct avltree*
+avltree_min_pr(struct avltree* tree, struct avltree* parent_node)
 {
-    /* struct avltree* r_tree = tree->left;
-    while (r_tree->left != NULL) {
-        check_min(tree->left);
-    } */
-    /* struct avltree* node = NULL;
-    while (tree->left != NULL) {
-        node = check_min(tree->left, node);
-    }
-    if (node != NULL) {
-        return node;
-    } */
-    struct avltree* parent_node = tree;
-    /* if (tree->left != NULL) {
-        tree = tree->left;
-    } */
+    // struct avltree* parent_node = tree;
     if (tree->left != NULL) {
-        tree = tree->left;
-        tree /* struct avltree* node */ = avltree_min(tree);
-        if (tree == NULL) {
-            return parent_node;
-        }
+        // tree = tree->left;
+        tree = avltree_min_pr(tree->left, tree);
     }
     if (tree->deleted == 0) {
         return tree;
     }
     if (tree->right != NULL) {
-        tree /* struct avltree* node */ = avltree_min(tree->right);
-        if (tree == NULL) {
-            return parent_node;
+        tree = avltree_min_pr(tree->right, tree);
+        if (tree->deleted == 0) {
+            return tree;
         }
-        /* return tree = tree->right; */
-    } else
-        return NULL;
+    }
+    return parent_node;
+}
+
+struct avltree* avltree_min(struct avltree* tree)
+{
+    struct avltree* parent_node = tree;
+    if (tree->left != NULL) {
+        tree = tree->left;
+        tree = avltree_min(tree);
+    }
+    if (tree->deleted == 0) {
+        return tree;
+    }
+    if (tree->right != NULL) {
+        tree = avltree_min_pr(tree->right, tree);
+        if (tree->deleted == 0) {
+            return tree;
+        }
+    }
+    return parent_node;
 }
 
 struct avltree*
