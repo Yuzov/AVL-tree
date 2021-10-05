@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <time.h>
-#define COUNT 10
+#define THRESHOLD 0.5
 
 int vec_left[50001] = {0};
 
@@ -51,39 +51,37 @@ int getrand(int min, int max)
 
 int main()
 {
-    srand(time(0));
     FILE* fout;
     float deleted_cnt = 0, total_cnt = 0;
     fout = fopen("out.txt", "w+");
     double time1 = 0, time2 = 0, res;
-    int random;
-    struct avltree *tree, *node;
+    int height;
+    struct avltree *tree, *last_node, *del_node, *max, *min;
     tree = avltree_create(1, "word", &total_cnt);
     for (int i = 2; i <= 50; i++) {
-        // fprintf(fout, "%d ", avltree_add(tree, i, "AVL"));
         tree = avltree_add(tree, i, "AVL", &total_cnt);
-
-        if (i % 1 == 0) {
-            random = getrand(i - 5000, i);
-            time1 = wtime();
-            // ctime1 = clock();
-            int x = time1 * 2;
-            avltree_lookup(tree, (random));
-            // ctime2 = clock();
-            time2 = wtime();
-            res = time2 - time1;
-            /*  fprintf(fout,
-                     "random = %d; n = %d; time = %.8lf\n",
-                     random,
-                     i,
-                     res); */
+        if (i % 1000 == 0) {
+            last_node = avltree_lookup(tree, i);
+            height = tree->height - last_node->height;
+            /* fprintf(fout, "(%d;%d) ", i, height); */
+            /* fprintf(fout, "n = %d; height = %d \n", i, height); */
         }
-        time1 = 0;
-        time2 = 0;
     }
-    tree = avltree_delete(tree, 49, &deleted_cnt, &total_cnt);
+    del_node = avltree_lookup(tree, 50);
+    printf("Node key before deletion - %d\n", del_node->key);
+
     tree = avltree_delete(tree, 50, &deleted_cnt, &total_cnt);
-    tree = avltree_max(tree);
+    del_node = avltree_lookup(tree, 50);
+    if (del_node == NULL) {
+        printf("This node does not exist\n");
+    }
+    /* for (int k = 20; k <= 49; k++) {
+        tree = avltree_delete(tree, k, &deleted_cnt, &total_cnt);
+    } */
+    /* max = avltree_max(tree);
+    min = avltree_min(tree);
+    printf("Max key - %d\n", max->key);
+    printf("Min key - %d\n", min->key); */
     Display(tree, 0, fout);
     avltree_free(tree);
     fclose(fout);
@@ -185,8 +183,8 @@ struct avltree* avltree_delete(
     if (del_node != NULL) {
         *deleted_cnt = *deleted_cnt + 1;
         del_node->deleted = 1;
-        float k = *deleted_cnt / *total_cnt;
-        if ((*deleted_cnt / (*total_cnt)) >= 0.5) {
+        float factor = *deleted_cnt / *total_cnt;
+        if (factor >= THRESHOLD) {
             *total_cnt = 0;
             *deleted_cnt = 0;
             struct avltree* rb_tree = NULL;
@@ -336,7 +334,10 @@ void Display(struct avltree* root, int ident, FILE* fout)
         return;
     }
 
-    fprintf(fout, "%d\n", root->key);
+    if (root->deleted == 0)
+        fprintf(fout, "%d\n", root->key);
+    else
+        fprintf(fout, "\n");
     if (!root->left && !root->right) {
         return;
     }
@@ -350,12 +351,14 @@ void Display(struct avltree* root, int ident, FILE* fout)
 struct avltree* avltree_lookup(struct avltree* tree, int key)
 {
     while (tree != NULL) {
-        if (key == tree->key) {
+        if ((key == tree->key) && (tree->deleted == 0)) {
             return tree;
         } else if (key < tree->key) {
             tree = tree->left;
-        } else {
+        } else if (key > tree->key) {
             tree = tree->right;
+        } else {
+            return NULL;
         }
     }
     return tree;
