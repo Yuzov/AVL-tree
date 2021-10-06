@@ -5,7 +5,7 @@
 #include <time.h>
 #define THRESHOLD 0.5
 
-int vec_left[50001] = {0};
+int vec_right[50001] = {0};
 
 struct avltree {
     int key;
@@ -60,21 +60,25 @@ int main()
     tree = avltree_create(1, "word", &total_cnt);
     for (int i = 2; i <= 50; i++) {
         tree = avltree_add(tree, i, "AVL", &total_cnt);
-        if (i % 1000 == 0) {
+        if (i % 1 == 0) {
             last_node = avltree_lookup(tree, i);
             height = tree->height - last_node->height;
             /* fprintf(fout, "(%d;%d) ", i, height); */
             /* fprintf(fout, "n = %d; height = %d \n", i, height); */
         }
     }
-    del_node = avltree_lookup(tree, 50);
+    /* for (int k = 26; k <= 50; k++) {
+        tree = avltree_delete(tree, k, &deleted_cnt, &total_cnt);
+    }
+    printf("total %f, deleted %f\n", total_cnt, deleted_cnt); */
+    /* del_node = avltree_lookup(tree, 50);
     printf("Node key before deletion - %d\n", del_node->key);
 
     tree = avltree_delete(tree, 50, &deleted_cnt, &total_cnt);
     del_node = avltree_lookup(tree, 50);
     if (del_node == NULL) {
         printf("This node does not exist\n");
-    }
+    } */
     /* for (int k = 20; k <= 49; k++) {
         tree = avltree_delete(tree, k, &deleted_cnt, &total_cnt);
     } */
@@ -166,7 +170,6 @@ struct avltree*
 avltree_rebuild(struct avltree* tree, struct avltree* rb_tree, float* total_cnt)
 {
     if (tree->deleted == 0) {
-        *total_cnt = *total_cnt + 1;
         rb_tree = avltree_add(rb_tree, tree->key, tree->value, total_cnt);
     }
     if (tree->left != NULL)
@@ -221,7 +224,10 @@ avltree_add(struct avltree* tree, int key, char* value, float* total_cnt)
         return avltree_create(key, value, total_cnt);
     }
     if ((tree->deleted == 1) && (tree->key == key)) {
-        return avltree_create(key, value, total_cnt);
+        tree->deleted = 0;
+        tree->value = value;
+        return tree;
+        // return avltree_create(key, value, total_cnt);
     }
     if (key < tree->key) {
         /* Insert into left subtree */
@@ -324,9 +330,9 @@ void Display(struct avltree* root, int ident, FILE* fout)
 {
     if (ident > 0) {
         for (int i = 0; i < ident - 1; ++i) {
-            fprintf(fout, vec_left[i] ? "│   " : "    ");
+            fprintf(fout, (vec_right[i] == 1) ? "│   " : "    ");
         }
-        fprintf(fout, vec_left[ident - 1] ? "├── " : "└── ");
+        fprintf(fout, (vec_right[ident - 1] == 1) ? "├── " : "└── ");
     }
 
     if (!root) {
@@ -342,10 +348,10 @@ void Display(struct avltree* root, int ident, FILE* fout)
         return;
     }
 
-    vec_left[ident] = 1;
-    Display(root->left, ident + 1, fout);
-    vec_left[ident] = 0;
+    vec_right[ident] = 1;
     Display(root->right, ident + 1, fout);
+    vec_right[ident] = 0;
+    Display(root->left, ident + 1, fout);
 }
 
 struct avltree* avltree_lookup(struct avltree* tree, int key)
